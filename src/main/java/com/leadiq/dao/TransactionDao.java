@@ -1,11 +1,9 @@
 package com.leadiq.dao;
 
 import java.util.Map;
-
 import org.springframework.stereotype.Service;
 import com.leadiq.dto.TransactionDto;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.ArrayList;
 
