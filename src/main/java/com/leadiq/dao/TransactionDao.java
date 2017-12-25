@@ -1,27 +1,24 @@
 package com.leadiq.dao;
 
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import org.springframework.stereotype.Service;
 import com.leadiq.dto.TransactionDto;
-import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
 
 @Service
-public class TransactionDao {
-	/*
-	 * This class is not thread safe, add concurrency control to avoid race conditions.
-	 */
+public class TransactionDao {	
+	private static ConcurrentMap<String,List<Long>> trxByType = null;
+	private static ConcurrentMap<Long,List<Long>> trxByParentId = null;
+	private static ConcurrentMap<Long,Double> trxSumByParentId = null;
+	private static ConcurrentMap<Long,TransactionDto> trxs = null;
 	
-	private static Map<String,List<Long>> trxByType = null;
-	private static Map<Long,List<Long>> trxByParentId = null;
-	private static Map<Long,Double> trxSumByParentId = null;
-	private static Map<Long,TransactionDto> trxs = null;
 	static{
-		trxByType 		 = new HashMap<String,List<Long>>();
-		trxByParentId    = new HashMap<Long,List<Long>>();
-		trxSumByParentId = new HashMap<Long,Double>();
-		trxs			 = new HashMap<Long,TransactionDto>();
+		trxByType 		 = new ConcurrentHashMap<String,List<Long>>();
+		trxByParentId    = new ConcurrentHashMap<Long,List<Long>>();
+		trxSumByParentId = new ConcurrentHashMap<Long,Double>();
+		trxs			 = new ConcurrentHashMap<Long,TransactionDto>();
 	}
 	
 	public TransactionDto getTransaction(Long trxid){
@@ -59,7 +56,8 @@ public class TransactionDao {
 		}
 	}
 	
-	public  boolean addTransaction(TransactionDto trx){
+	
+	public synchronized  boolean addTransaction(TransactionDto trx){
 		if(trx.getId() == 0 || trx.getAmount() == 0 || trx.getType() == null || trx.getType().trim().length()==0)
 			return false;
 		
@@ -106,9 +104,9 @@ public class TransactionDao {
 	}
 	
 	public void reset(){
-		trxByType 		 = new HashMap<String,List<Long>>();
-		trxByParentId    = new HashMap<Long,List<Long>>();
-		trxSumByParentId = new HashMap<Long,Double>();
-		trxs			 = new HashMap<Long,TransactionDto>();
+		trxByType 		 = new ConcurrentHashMap<String,List<Long>>();
+		trxByParentId    = new ConcurrentHashMap<Long,List<Long>>();
+		trxSumByParentId = new ConcurrentHashMap<Long,Double>();
+		trxs			 = new ConcurrentHashMap<Long,TransactionDto>();
 	}
 }
