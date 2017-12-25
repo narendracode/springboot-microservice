@@ -9,20 +9,15 @@ import java.util.ArrayList;
 
 @Service
 public class TransactionDao {
+	/*
+	 * This class is not thread safe, add concurrency control to avoid race conditions.
+	 */
+	
 	private static Map<String,List<Long>> trxByType = null;
 	private static Map<Long,List<Long>> trxByParentId = null;
 	private static Map<Long,Double> trxSumByParentId = null;
 	private static Map<Long,TransactionDto> trxs = null;
 	static{
-		trxByType 		 = new HashMap<String,List<Long>>();
-		trxByParentId    = new HashMap<Long,List<Long>>();
-		trxSumByParentId = new HashMap<Long,Double>();
-		trxs			 = new HashMap<Long,TransactionDto>();
-	}
-	
-	
-	
-	public void reset(){
 		trxByType 		 = new HashMap<String,List<Long>>();
 		trxByParentId    = new HashMap<Long,List<Long>>();
 		trxSumByParentId = new HashMap<Long,Double>();
@@ -51,39 +46,8 @@ public class TransactionDao {
 			return 0.0;
 	}
 	
-	
-	public  boolean addTransaction(TransactionDto trx){
-		
-		if(trx.getId() == 0 || trx.getAmount() == 0 || trx.getType() == null || trx.getType().trim().length()==0)
-			return false;
-		
-		
-		//update list of all transactions
-		trxs.put(trx.getId(),trx);
-		
-		//update transactions by parentid cache
-		List<Long> listpid = null;
-		if(trxByParentId.containsKey(trx.getParent_id())){
-			listpid = trxByParentId.get(trx.getParent_id());
-		}else{
-			listpid = new ArrayList<Long>();
-		}
-		listpid.add(trx.getParent_id());
-		trxByParentId.put(trx.getParent_id(), listpid);
-		
-		
-		//update transactions by type cache
-		List<Long> list = null;
-		if(trxByType.containsKey(trx.getType())){
-			list = trxByType.get(trx.getType());
-		}else{
-			list = new ArrayList<Long>();
-		}
-		list.add(trx.getId());
-		trxByType.put(trx.getType(), list);
-		
-		
-		//update transactions sum by parentid cache
+
+	public void updateTrxSumByParentId(TransactionDto trx){
 		double sum = 0;
 		if(trx.getParent_id()!=0){
 			if(trxSumByParentId.containsKey(trx.getParent_id())){
@@ -93,9 +57,58 @@ public class TransactionDao {
 			}
 			trxSumByParentId.put(trx.getParent_id(),sum);
 		}
+	}
+	
+	public  boolean addTransaction(TransactionDto trx){
+		if(trx.getId() == 0 || trx.getAmount() == 0 || trx.getType() == null || trx.getType().trim().length()==0)
+			return false;
+		
+		//update list of all transactions
+		updateTrxsMap(trx);
+		
+		//update transactions by parentid cache
+		updateTrxByParentId(trx);
+		
+		//update transactions by type cache
+		updateTrxByType(trx);
+		
+		//update transactions sum by parentid cache
+		updateTrxSumByParentId(trx);
 		
 		return true;
 	}
 	
 	
+	public void updateTrxsMap(TransactionDto trx){
+		trxs.put(trx.getId(),trx);
+	}
+	
+	public void updateTrxByParentId(TransactionDto trx){
+		List<Long> listpid = null;
+		if(trxByParentId.containsKey(trx.getParent_id())){
+			listpid = trxByParentId.get(trx.getParent_id());
+		}else{
+			listpid = new ArrayList<Long>();
+		}
+		listpid.add(trx.getParent_id());
+		trxByParentId.put(trx.getParent_id(), listpid);
+	}
+	
+	public void updateTrxByType(TransactionDto trx){
+		List<Long> list = null;
+		if(trxByType.containsKey(trx.getType())){
+			list = trxByType.get(trx.getType());
+		}else{
+			list = new ArrayList<Long>();
+		}
+		list.add(trx.getId());
+		trxByType.put(trx.getType(), list);
+	}
+	
+	public void reset(){
+		trxByType 		 = new HashMap<String,List<Long>>();
+		trxByParentId    = new HashMap<Long,List<Long>>();
+		trxSumByParentId = new HashMap<Long,Double>();
+		trxs			 = new HashMap<Long,TransactionDto>();
+	}
 }
